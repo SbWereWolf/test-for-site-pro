@@ -18,10 +18,8 @@ class UserIdentity extends CUserIdentity
     public function authenticate()
     {
         $sql = '
-select null where exists (
-    select null from  user
-    where email = :email and password = :password
-    )';
+select null from  user
+where email = :email and password = :password';
         $isExists = Customer::model()
             ->findBySql(
                 $sql,
