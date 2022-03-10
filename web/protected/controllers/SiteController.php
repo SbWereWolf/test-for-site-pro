@@ -74,6 +74,34 @@ class SiteController extends Controller
     }
 
     /**
+     * Displays the registration page
+     */
+    public function actionRegistration()
+    {
+        $model = new RegistrationForm();
+
+        // if it is ajax validation request
+        if (
+            isset($_POST['ajax'])
+            && $_POST['ajax'] === 'registration-form'
+        ) {
+            echo CActiveForm::validate($model);
+            Yii::app()->end();
+        }
+
+        // collect user input data
+        if (isset($_POST['RegistrationForm'])) {
+            $model->attributes = $_POST['RegistrationForm'];
+            // validate user input and redirect to the previous page if valid
+            if ($model->validate() && $model->register()) {
+                $this->redirect(Yii::app()->user->returnUrl);
+            }
+        }
+        // display the registration form
+        $this->render('registration', array('model' => $model));
+    }
+
+    /**
      * Displays the login page
      */
     public function actionLogin()

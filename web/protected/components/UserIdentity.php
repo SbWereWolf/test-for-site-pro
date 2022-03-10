@@ -7,27 +7,40 @@
  */
 class UserIdentity extends CUserIdentity
 {
-	/**
-	 * Authenticates a user.
-	 * The example implementation makes sure if the username and password
-	 * are both 'demo'.
-	 * In practical applications, this should be changed to authenticate
-	 * against some persistent user identity storage (e.g. database).
-	 * @return boolean whether authentication succeeds.
-	 */
-	public function authenticate()
-	{
-		$users=array(
-			// username => password
-			'demo'=>'demo',
-			'admin'=>'admin',
-		);
-		if(!isset($users[$this->username]))
-			$this->errorCode=self::ERROR_USERNAME_INVALID;
-		elseif($users[$this->username]!==$this->password)
-			$this->errorCode=self::ERROR_PASSWORD_INVALID;
-		else
-			$this->errorCode=self::ERROR_NONE;
-		return !$this->errorCode;
-	}
+    /**
+     * Authenticates a user.
+     * The example implementation makes sure if the username and password
+     * are both 'demo'.
+     * In practical applications, this should be changed to authenticate
+     * against some persistent user identity storage (e.g. database).
+     * @return bool whether authentication succeeds.
+     */
+    public function authenticate()
+    {
+        $sql = '
+select null where exists (
+    select null from  user
+    where email = :email and password = :password
+    )';
+        $isExists = Customer::model()
+            ->findBySql(
+                $sql,
+                array(
+                    ':email' => $this->username,
+                    ':password' => $this->password,
+                )
+            );
+        $isExists = !empty($isExists);
+
+        if (!$isExists) {
+            $this->errorCode = static::ERROR_PASSWORD_INVALID;
+        }
+        if ($isExists) {
+            $this->errorCode = static::ERROR_NONE;
+        }
+
+        $result = !$this->errorCode;
+
+        return $result;
+    }
 }
