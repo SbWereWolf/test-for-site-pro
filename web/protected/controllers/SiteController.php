@@ -1,5 +1,7 @@
 <?php
 
+use PragmaRX\Google2FAQRCode\Google2FA;
+
 class SiteController extends Controller
 {
     /**
@@ -117,13 +119,55 @@ class SiteController extends Controller
         // collect user input data
         if (isset($_POST['LoginForm'])) {
             $model->attributes = $_POST['LoginForm'];
-            // validate user input and redirect to the previous page if valid
+
             if ($model->validate() && $model->login()) {
-                $this->redirect(Yii::app()->user->returnUrl);
+                $customer = Customer::model()
+                    ->find(
+                        'email=:email',
+                        array(':email' => $model->username)
+                    );
+
+                $google2fa = new Google2FA();
+                $qrCodeUrl = $google2fa->getQRCodeInline(
+                    "My Website",
+                    $model->username,
+                    $customer->secret
+                );
+
+                $captcha = new CaptchaForm();
+                $captcha->qrCodeUrl = $qrCodeUrl;
+                $captcha->email = $model->username;
+                $captcha->password = $model->password;
+                $captcha->rememberMe = $model->rememberMe;
+
+                $this->render('captcha', array('model' => $captcha));
+                Yii::app()->end();
             }
         }
         // display the login form
         $this->render('login', array('model' => $model));
+    }
+
+    /**
+     * Displays the captcha page
+     */
+    public function actionCaptcha()
+    {
+        $model = new CaptchaForm();
+
+        // collect user input data
+        if (isset($_POST['CaptchaForm'])) {
+            $model->attributes = $_POST['CaptchaForm'];
+            $model->clearErrors();
+
+            if ($model->validate() && $model->verify()) {
+                $this->redirect(Yii::app()->homeUrl);
+            }
+        }
+        if ($model->hasErrors()) {
+            $this->render('captcha', array('model' => $model));
+            Yii::app()->end();
+        }
     }
 
     /**

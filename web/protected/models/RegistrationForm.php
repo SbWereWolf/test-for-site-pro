@@ -1,6 +1,7 @@
 <?php
 
-use PragmaRX\Google2FA\Google2FA;
+use PragmaRX\Google2FAQRCode\Google2FA;
+
 
 /**
  * LoginForm class.
